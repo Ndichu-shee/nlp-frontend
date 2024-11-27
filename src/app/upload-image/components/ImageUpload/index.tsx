@@ -1,16 +1,22 @@
 import React, { useState } from "react";
 import { MdOutlineCloudUpload } from "react-icons/md";
+import { predict } from "@/app/utils/predict";
 
 const ImageUpload = () => {
   const [files, setFiles] = useState<{ [key: string]: File[] }>({
     Mammogram: [],
     Ultrasound: [],
-    Biopsy: [],
+    Cells: [],
   });
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [predictions, setPredictions] = useState<any>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: string
+  ) => {
     if (e.target.files) {
       const updatedFiles = { ...files };
       updatedFiles[type] = Array.from(e.target.files);
@@ -21,7 +27,9 @@ const ImageUpload = () => {
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSelectedTypes((prev) =>
-      prev.includes(value) ? prev.filter((type) => type !== value) : [...prev, value]
+      prev.includes(value)
+        ? prev.filter((type) => type !== value)
+        : [...prev, value]
     );
   };
 
@@ -36,27 +44,25 @@ const ImageUpload = () => {
     const formData = new FormData();
 
     selectedTypes.forEach((type) => {
-      files[type].forEach((file, index) => {
-        formData.append(`${type.toLowerCase()}[${index}]`, file);
+      const pluralKey =
+        type === "Mammogram"
+          ? "mammograms"
+          : type === "Ultrasound"
+          ? "ultrasounds"
+          : "cells";
+      files[type].forEach((file) => {
+        formData.append(pluralKey, file);
       });
     });
 
     try {
-      const response = await fetch("https://webhook.site/6e8f5779-41bf-4f60-9b1c-169099a54481", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await predict(formData);
 
-      if (!response.ok) {
-        throw new Error("Failed to upload the files.");
-      }
-
-      const result = await response.json();
-      console.log(result);
-      alert("Analysis completed. Check console for results.");
+      setPredictions(response.predictions);
+      console.log(response);
     } catch (error) {
       console.error(error);
-      alert("Failed to analyze the images.");
+      //   alert("Failed to analyze the images.");
     } finally {
       setLoading(false);
     }
@@ -81,14 +87,20 @@ const ImageUpload = () => {
 
       <div className="flex flex-wrap justify-between gap-4">
         {/* Mammogram */}
-        <div className={`w-[25%] flex flex-col space-y-4 ${getBackgroundColor("Mammogram")} p-4 rounded-lg`}>
+        <div
+          className={`w-[25%] flex flex-col space-y-4 ${getBackgroundColor(
+            "Mammogram"
+          )} p-4 rounded-lg`}
+        >
           <div className="p-8 rounded-lg border-2 border-dashed border-pink-300 cursor-pointer">
             <label
               htmlFor="mammogram"
               className="text-center text-sm font-medium flex flex-col space-y-4"
             >
               <MdOutlineCloudUpload className="mx-auto text-4xl mb-2 text-[#1849D6]" />
-              <span className="text-[#1849D6]">{renderSelectedFiles("Mammogram")}</span>
+              <span className="text-[#1849D6]">
+                {renderSelectedFiles("Mammogram")}
+              </span>
               <span className="text-[#6D6D6D] font-normal">
                 Max 10 MB files are allowed
               </span>
@@ -118,14 +130,20 @@ const ImageUpload = () => {
         </div>
 
         {/* Ultrasound */}
-        <div className={`w-[25%] flex flex-col space-y-4 ${getBackgroundColor("Ultrasound")} p-4 rounded-lg`}>
+        <div
+          className={`w-[25%] flex flex-col space-y-4 ${getBackgroundColor(
+            "Ultrasound"
+          )} p-4 rounded-lg`}
+        >
           <div className="p-8 rounded-lg border-2 border-dashed border-pink-300 cursor-pointer">
             <label
               htmlFor="ultrasound"
               className="text-center text-sm font-medium flex flex-col space-y-4"
             >
               <MdOutlineCloudUpload className="mx-auto text-4xl mb-2 text-[#1849D6]" />
-              <span className="text-[#1849D6]">{renderSelectedFiles("Ultrasound")}</span>
+              <span className="text-[#1849D6]">
+                {renderSelectedFiles("Ultrasound")}
+              </span>
               <span className="text-[#6D6D6D] font-normal">
                 Max 10 MB files are allowed
               </span>
@@ -154,39 +172,45 @@ const ImageUpload = () => {
           </div>
         </div>
 
-        {/* Biopsy */}
-        <div className={`w-[25%] flex flex-col space-y-4 ${getBackgroundColor("Biopsy")} p-4 rounded-lg`}>
+        {/* Cells */}
+        <div
+          className={`w-[25%] flex flex-col space-y-4 ${getBackgroundColor(
+            "Cells"
+          )} p-4 rounded-lg`}
+        >
           <div className="p-8 rounded-lg border-2 border-dashed border-pink-300 cursor-pointer">
             <label
-              htmlFor="biopsy"
+              htmlFor="cells"
               className="text-center text-sm font-medium flex flex-col space-y-4"
             >
               <MdOutlineCloudUpload className="mx-auto text-4xl mb-2 text-[#1849D6]" />
-              <span className="text-[#1849D6]">{renderSelectedFiles("Biopsy")}</span>
+              <span className="text-[#1849D6]">
+                {renderSelectedFiles("Cells")}
+              </span>
               <span className="text-[#6D6D6D] font-normal">
                 Max 10 MB files are allowed
               </span>
             </label>
             <input
               type="file"
-              id="biopsy"
+              id="cells"
               accept="image/*"
               multiple
               className="hidden"
-              onChange={(e) => handleFileChange(e, "Biopsy")}
+              onChange={(e) => handleFileChange(e, "Cells")}
             />
           </div>
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
-              value="Biopsy"
-              id="biopsyCheckbox"
-              checked={selectedTypes.includes("Biopsy")}
+              value="Cells"
+              id="cellsCheckbox"
+              checked={selectedTypes.includes("Cells")}
               onChange={handleCheckboxChange}
               className="h-5 w-5"
             />
-            <label htmlFor="biopsyCheckbox" className="text-lg">
-              Biopsy
+            <label htmlFor="cellsCheckbox" className="text-lg">
+              Cells
             </label>
           </div>
         </div>
@@ -203,6 +227,39 @@ const ImageUpload = () => {
         >
           {loading ? "Analyzing..." : "Analyze"}
         </button>
+
+        {predictions && (
+          <>
+            <h2 className="font-900 text-4xl my-2">Results</h2>
+            <div className="flex gap-2 mt-5">
+              {predictions &&
+                Object.entries(predictions).map(
+                  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+                  ([type, details]: [string, any]) => (
+                    <div
+                      key={type}
+                      className="border border-gray-300 rounded-lg p-4 w-1/3"
+                    >
+                      <h3 className="text-lg font-semibold capitalize">
+                        {type}
+                      </h3>
+                      <p>
+                        {details.class_prediction === "Positive"
+                          ? `The prediction indicates the presence of breast cancer with a confidence of ${(
+                              details.confidence * 100
+                            ).toFixed(
+                              2
+                            )}%. Further clinical evaluation is recommended.`
+                          : `The prediction indicates no signs of breast cancer with a confidence of ${(
+                              details.confidence * 100
+                            ).toFixed(2)}%. Regular monitoring is advised.`}
+                      </p>
+                    </div>
+                  )
+                )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
