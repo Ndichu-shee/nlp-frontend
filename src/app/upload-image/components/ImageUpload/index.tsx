@@ -302,14 +302,14 @@ const ImageUpload = () => {
                         <div className="px-4 py-2 bg-gray-50 text-left">
                           <p>
                             {details.class_prediction === "Positive"
-                              ? `The prediction indicates the presence of breast cancer with a confidence of ${(
+                              ? `With a ${(details.confidence * 100).toFixed(
+                                  2
+                                )}% confidence level, the analysis points to the presence of breast cancer. Immediate follow-up with a clinical evaluation is advised to ensure timely diagnosis and intervention.`
+                              : `The results indicate no evidence of breast cancer with a ${(
                                   details.confidence * 100
                                 ).toFixed(
                                   2
-                                )}%. Further clinical evaluation is recommended.`
-                              : `The prediction indicates no signs of breast cancer with a confidence of ${(
-                                  details.confidence * 100
-                                ).toFixed(2)}%. Regular monitoring is advised.`}
+                                )}% confidence level. Continued screening and follow-up is still recommended to maintain patient health.`}
                           </p>
                         </div>
                       )}
